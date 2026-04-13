@@ -1,6 +1,6 @@
 # skills
 
-Personal Claude Code skills.
+Personal Claude skills.
 
 ## Skills
 
@@ -8,4 +8,4 @@ Personal Claude Code skills.
 
 ## Usage
 
-Skills are loaded by Claude Code and invoked via slash command (e.g. `/interview-me`) or triggered automatically when their description matches the request.
+Skills work in both Claude Code and Claude Desktop. They can be invoked via slash command (e.g. `/interview-me`) or triggered automatically when their description matches the request.
