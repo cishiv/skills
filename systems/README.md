@@ -1,15 +1,36 @@
-## Skill Systems
+# Skill Systems
 
-> This is a very early idea that I am working on for my personal workflow. No guarentee that this will work well without my specific set up.
+> Early personal-workflow experiment. No guarantee this works well outside my setup.
 
-Systems are sets of skills intended to be used together. This does not mean that skills can't be installed and used individually, however - there is an implicit dependency graph between some of the skills in a system.
+A **system** is a set of skills intended to be used together. Skills can still be installed and used individually, but there's an implicit dependency graph between some of them.
 
-Each skill system has a README.md and a `skills/` directory. Any skill that is shared across multiple systems is at the root `../{SKILL_NAME}` and referenced in the README.md of the skill system.
+## Pattern
 
-### MVP Skill System
+Each system is a **single bundled skill** that nests its sub-skills as folders, mirroring the [`product-team`](https://github.com/alirezarezvani/claude-skills/tree/main/product-team) layout:
 
-A skill system to help develop MVP applications.
+```
+{system-name}/
+├── SKILL.md              # top-level dispatcher: routes to the right sub-skill
+├── README.md             # human-readable overview (optional)
+└── {sub-skill-name}/
+    ├── SKILL.md
+    ├── references/       # static references the sub-skill loads on demand
+    ├── scripts/          # automation (Python, Bun, etc.) — optional
+    └── assets/           # templates, fixtures — optional
+```
+
+The top-level `SKILL.md` doesn't do the work itself — it explains the pipeline and routes the user to the appropriate sub-skill.
+
+Skills shared across multiple systems live at the repo root under `../skills/{shared-skill}/` and are referenced from each system's top-level `SKILL.md`.
+
+## Systems
+
+### [`mvp-builder/`](mvp-builder/)
+
+Idea → deployed MVP, using the user's three template repos (`kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`). Pipeline: `detailed-specification` → `mvp-specification` → `build-mvp` → `railway-deployment-{template}`, with `extend-features` as a sibling entry point for existing repos.
+
+Currently implemented stages: `detailed-specification`. Others scoped on demand.
 
 ### Blog Synthesis Skill System
 
-A skill system to help translate raw notes into consumable blog posts with tone maintained.
+Planned. Translate raw notes into consumable blog posts with tone maintained.

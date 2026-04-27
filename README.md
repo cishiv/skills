@@ -10,6 +10,8 @@ Personal Claude skills.
 
 Skills work in both Claude Code and Claude Desktop. They can be invoked via slash command (e.g. `/interview-me`) or triggered automatically when their description matches the request.
 
+Skills are stored in markdown format, not `.skill` format.
+
 ## skill-sync
 
 A small Bun CLI in [`skill-sync/`](skill-sync/) for managing Claude Code skills:
