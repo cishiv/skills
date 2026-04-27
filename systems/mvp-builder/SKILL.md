@@ -41,7 +41,7 @@ Don't simulate stages that aren't built. If the user asks for `mvp-specification
 
 ## Conventions all sub-skills inherit
 
-These are the Phase 0 contracts in the three template repos. Sub-skills validate against them and refuse stale inputs. Don't paper over breakage inside a sub-skill — surface it.
+These are the contracts the three template repos enforce. Sub-skills validate against them and refuse stale inputs. Don't paper over breakage inside a sub-skill — surface it.
 
 - `SPECIFICATIONS/` directory with `NOT_YET_IMPLEMENTED/`, `IMPLEMENTED/`, `DESIGN/`.
 - `SPEC_TEMPLATE.md` and `HOW_TO_USE_SPECIFICATION.md` define the contract.

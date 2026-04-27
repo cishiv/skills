@@ -23,4 +23,4 @@ Each file includes a snapshot date in its header and the literal template conten
 
 ## When this directory needs updating
 
-When `SPEC_TEMPLATE.md` changes in any of the three repos. After a Phase 0-style amendment, re-snapshot the affected templates here. The user is responsible for keeping this directory in sync with the templates; the skill cannot detect drift on its own.
+When `SPEC_TEMPLATE.md` changes in any of the three repos. Re-snapshot the affected templates here after any template amendment. The user is responsible for keeping this directory in sync with the templates; the skill cannot detect drift on its own.

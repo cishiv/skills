@@ -15,7 +15,7 @@ The skill body and routing live in [`SKILL.md`](SKILL.md). This README is just f
 - `railway-deployment-{kitchensinkts,twotier,statix}/` — first-time deploy.
 - `extend-features/` — sibling entry point for feature work on existing repos.
 
-These are scoped on demand, not up front, per `META_SCOPE` in the Obsidian vault.
+These are scoped on demand, not up front.
 
 ## Templates this system targets
 
@@ -23,4 +23,4 @@ These are scoped on demand, not up front, per `META_SCOPE` in the Obsidian vault
 - [`kitchen-sink-twotier`](https://github.com/cishiv/kitchen-sink-twotier) — separate Hono backend + React client.
 - [`statix`](https://github.com/cishiv/statix) — static markdown site.
 
-All three carry the Phase 0 conventions (`SPECIFICATIONS/`, `SPEC_TEMPLATE.md`, lazy-init, etc.) that the skills depend on.
+All three carry the shared conventions (`SPECIFICATIONS/`, `SPEC_TEMPLATE.md`, lazy-init, etc.) that the skills depend on.
