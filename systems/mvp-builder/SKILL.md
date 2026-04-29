@@ -22,7 +22,7 @@ Two entry points, shared tail.
 | Stage | Status | Sub-skill | Notes |
 |---|---|---|---|
 | `detailed-specification` | ✅ implemented | `detailed-specification/` | Project-mode detailed spec. Both surfaces (Claude Code, claude.ai). |
-| `mvp-specification` | ⚪ not yet built | — | Cuts scope. Adds ACCEPTANCE_CRITERIA. Handles both modes. |
+| `mvp-specification` | ✅ implemented | `mvp-specification/` | Cuts scope. Writes EARS-flavored prose ACCEPTANCE_CRITERIA + atomic DEFERRED sibling. Handles both modes, both surfaces. |
 | `build-mvp` | ⚪ not yet built | — | Loops on ACCEPTANCE_CRITERIA up to 3 attempts/criterion. Claude Code only. |
 | `railway-deployment-{template}` | ⚪ not yet built | — | First-time deploy in project mode. Three template variants. |
 | `extend-features` | ⚪ not yet built | — | Feature-mode entry point. Reads existing repo state. |
@@ -32,7 +32,7 @@ Two entry points, shared tail.
 Pick the right sub-skill from what the user asked for:
 
 - **"spec out my idea" / "turn this brain dump into a project spec" / "I want to build X"** → load `detailed-specification/SKILL.md` and follow its workflow.
-- **"cut scope" / "make this an MVP" / "add acceptance criteria"** → not yet built. Tell the user honestly; don't ad-hoc the work.
+- **"cut scope" / "make this an MVP" / "add acceptance criteria" / "MVP this"** → load `mvp-specification/SKILL.md` and follow its workflow. Requires an upstream `DETAILED_*` (project mode) or extend output (feature mode).
 - **"build it" / "implement this spec" / "go through the acceptance criteria"** → not yet built.
 - **"deploy to Railway" / "ship it"** → not yet built.
 - **"extend this project" / "add a feature to my repo"** → not yet built.
