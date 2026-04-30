@@ -1,6 +1,6 @@
 # statix — SPEC_TEMPLATE.md snapshot
 
-**Snapshot date:** 2026-04-26
+**Snapshot date:** 2026-04-30
 **Repo:** `github.com/cishiv/statix`
 **File:** `SPECIFICATIONS/SPEC_TEMPLATE.md`
 
@@ -43,14 +43,29 @@ See SPECIFICATIONS/HOW_TO_USE_SPECIFICATION.md for filename conventions and the 
 
 ## ACCEPTANCE_CRITERIA
 
-- [ ] [BLOCKING] <verifiable assertion>
-- [ ] [NICE_TO_HAVE] <verifiable assertion>
+Acceptance criteria are sectioned-numbered, tagged, and written as EARS-flavored prose with first-class pre-conditions. The build agent picks the verification mechanism per criterion from this repo's menu (command exiting 0, built page DOM matching a documented assertion, or — for `[USER_VERIFIES]` — manual sign-off). See `CLAUDE.md` for the full contract.
 
-Each criterion must reduce to one of:
-- A command that exits 0 (e.g. `bun run typecheck`, `bun run test`).
-- An HTTP request whose response matches a documented Zod schema.
+### 1. <Section name (group by user flow or domain)>
 
-Untagged criteria default to [BLOCKING]. Build and extend agents loop up to 3 attempts per criterion before escalating to the user.
+#### 1.1 <Short criterion title> [BLOCKING]
+
+**Pre-conditions:** <world-state required before this criterion applies>
+
+WHEN `<event>`, the system shall `<response>`.
+
+#### 1.2 <Short criterion title> [BLOCKING]
+
+**Pre-conditions:** <…>
+
+IF `<unwanted condition>`, THEN the system shall `<response>`.
+
+### 2. <Section name>
+
+#### 2.1 <Short criterion title> [NICE_TO_HAVE] [USER_VERIFIES]
+
+**Pre-conditions:** <…>
+
+<EARS-flavored prose; this criterion will be verified by the user, not by an automated check.>
 
 ## Problem statement
 
