@@ -9,9 +9,9 @@ The skill body and routing live in [`SKILL.md`](SKILL.md). This README is just f
 - [`detailed-specification/`](detailed-specification/) — turn a brain dump or interview Q&A into a project-mode detailed spec. The full vision before any scope-cutting.
 - [`mvp-specification/`](mvp-specification/) — cut a detailed/extend spec down to the smallest valuable thing to ship. Writes EARS-flavored prose acceptance criteria. Handles both project and feature modes.
 - [`build-mvp/`](build-mvp/) — sequential per-criterion loop against the live repo. One commit per criterion, `git reset` rollback per attempt, persistent verification artifacts, end-of-build report. Claude Code only.
+- [`railway-deployment/`](railway-deployment/) — first-time Railway provisioning + first deploy. Single parameterized skill covering all three templates (per-template differences in bundled `references/template-variants/`). Project mode only; subsequent deploys are `git push`. Requires Railway MCP and `web_fetch`. Claude Code only.
 
 ## What's not here yet
-- `railway-deployment-{kitchensinkts,twotier,statix}/` — first-time deploy.
 - `extend-features/` — sibling entry point for feature work on existing repos.
 
 These are scoped on demand, not up front.

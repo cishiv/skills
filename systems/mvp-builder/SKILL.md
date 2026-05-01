@@ -12,7 +12,7 @@ A bundled skill system for taking an idea from "scratchpad" to "deployed MVP" us
 Two entry points, shared tail.
 
 **Project mode** (new repo)
-`detailed-specification` → `mvp-specification` → `build-mvp` → `railway-deployment-{template}`
+`detailed-specification` → `mvp-specification` → `build-mvp` → `railway-deployment`
 
 **Feature mode** (existing repo)
 `extend-features` → `mvp-specification` → `build-mvp` → `git push`
@@ -24,7 +24,7 @@ Two entry points, shared tail.
 | `detailed-specification` | ✅ implemented | `detailed-specification/` | Project-mode detailed spec. Both surfaces (Claude Code, claude.ai). |
 | `mvp-specification` | ✅ implemented | `mvp-specification/` | Cuts scope. Writes EARS-flavored prose ACCEPTANCE_CRITERIA + atomic DEFERRED sibling. Handles both modes, both surfaces. |
 | `build-mvp` | ✅ implemented | `build-mvp/` | Sequential per-criterion loop with `git reset` rollback per attempt. One commit per criterion. Persistent verification artifacts. End-of-build report. Both modes. Claude Code only. |
-| `railway-deployment-{template}` | ⚪ not yet built | — | First-time deploy in project mode. Three template variants. |
+| `railway-deployment` | ✅ implemented | `railway-deployment/` | First-time provisioning + first deploy. Single parameterized skill across all three templates. Project mode only — feature-mode "deploy" is just `git push`. Claude Code only. Requires Railway MCP and `web_fetch`. |
 | `extend-features` | ⚪ not yet built | — | Feature-mode entry point. Reads existing repo state. |
 
 ## Routing
@@ -34,7 +34,7 @@ Pick the right sub-skill from what the user asked for:
 - **"spec out my idea" / "turn this brain dump into a project spec" / "I want to build X"** → load `detailed-specification/SKILL.md` and follow its workflow.
 - **"cut scope" / "make this an MVP" / "add acceptance criteria" / "MVP this"** → load `mvp-specification/SKILL.md` and follow its workflow. Requires an upstream `DETAILED_*` (project mode) or extend output (feature mode).
 - **"build it" / "implement this spec" / "go through the acceptance criteria" / "run the build"** → load `build-mvp/SKILL.md` and follow its workflow. Requires an `MVP_*.md` in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/`. Claude Code only — refuses on dirty tree or non-main branch.
-- **"deploy to Railway" / "ship it"** → not yet built.
+- **"deploy to Railway" / "ship it" / "first deploy"** → load `railway-deployment/SKILL.md` and follow its workflow. Project mode only — first-time provisioning + first deploy. Subsequent deploys are `git push`. Requires Railway MCP and `web_fetch`. Claude Code only.
 - **"extend this project" / "add a feature to my repo"** → not yet built.
 
 Don't simulate stages that aren't built. If the user asks for `mvp-specification` or later, say it isn't implemented yet and stop. Stages that exist will be added under this directory as standalone sub-skill folders.
@@ -65,3 +65,5 @@ These are the contracts the three template repos enforce. Sub-skills validate ag
 | `extend-features` | feature | `DETAILED_{FEATURE_NAME}_{YYYYMMDD}.md` |
 | `mvp-specification` | feature | `MVP_{FEATURE_NAME}_{YYYYMMDD}.md` |
 | out-of-MVP siblings | both | `MVP_{YYYYMMDD}_DEFERRED.md` / `MVP_{FEATURE_NAME}_{YYYYMMDD}_DEFERRED.md` |
+| `build-mvp` deploy report | both | `AGENT_REPORTS/BUILD_REPORT_{YYYYMMDD}_{HHMM}.md` (not committed) |
+| `railway-deployment` deploy report | project | `AGENT_REPORTS/DEPLOY_REPORT_{YYYYMMDD}_{HHMM}.md` (not committed) |
