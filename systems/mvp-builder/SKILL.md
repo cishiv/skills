@@ -23,7 +23,7 @@ Two entry points, shared tail.
 |---|---|---|---|
 | `detailed-specification` | ✅ implemented | `detailed-specification/` | Project-mode detailed spec. Both surfaces (Claude Code, claude.ai). |
 | `mvp-specification` | ✅ implemented | `mvp-specification/` | Cuts scope. Writes EARS-flavored prose ACCEPTANCE_CRITERIA + atomic DEFERRED sibling. Handles both modes, both surfaces. |
-| `build-mvp` | ⚪ not yet built | — | Loops on ACCEPTANCE_CRITERIA up to 3 attempts/criterion. Claude Code only. |
+| `build-mvp` | ✅ implemented | `build-mvp/` | Sequential per-criterion loop with `git reset` rollback per attempt. One commit per criterion. Persistent verification artifacts. End-of-build report. Both modes. Claude Code only. |
 | `railway-deployment-{template}` | ⚪ not yet built | — | First-time deploy in project mode. Three template variants. |
 | `extend-features` | ⚪ not yet built | — | Feature-mode entry point. Reads existing repo state. |
 
@@ -33,7 +33,7 @@ Pick the right sub-skill from what the user asked for:
 
 - **"spec out my idea" / "turn this brain dump into a project spec" / "I want to build X"** → load `detailed-specification/SKILL.md` and follow its workflow.
 - **"cut scope" / "make this an MVP" / "add acceptance criteria" / "MVP this"** → load `mvp-specification/SKILL.md` and follow its workflow. Requires an upstream `DETAILED_*` (project mode) or extend output (feature mode).
-- **"build it" / "implement this spec" / "go through the acceptance criteria"** → not yet built.
+- **"build it" / "implement this spec" / "go through the acceptance criteria" / "run the build"** → load `build-mvp/SKILL.md` and follow its workflow. Requires an `MVP_*.md` in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/`. Claude Code only — refuses on dirty tree or non-main branch.
 - **"deploy to Railway" / "ship it"** → not yet built.
 - **"extend this project" / "add a feature to my repo"** → not yet built.
 
