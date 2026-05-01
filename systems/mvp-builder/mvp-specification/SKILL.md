@@ -7,12 +7,13 @@ description: Use this skill when the user wants to take an upstream detailed/ext
 
 This skill takes an upstream detailed (or extend) specification and produces the **MVP specification** — the smallest version that proves the product loop and delivers value to a real end user.
 
-The upstream spec is the full vision; this skill cuts it. The MVP spec is the input to `/build-mvp`, which loops on the `ACCEPTANCE_CRITERIA` until they pass.
+The upstream spec is the full vision; this skill cuts it. The MVP spec is the input to `/build-from-spec`, which loops on the `ACCEPTANCE_CRITERIA` until they pass.
 
 The bias is toward **minimum loveable**, not minimum *viable*. Cuts are made on complexity and impact on extensibility, not on time. Templates already provide the heavy lifting — the cut should preserve everything the template gives for free and remove only the new work that doesn't earn its place.
 
 ## Boundaries
 
+- **Optional in the pipeline.** This skill is no longer required between detailed-spec and build. `/build-from-spec` accepts detailed specs (which carry their own AC) directly. Invoke `/mvp-specification` when scope-cutting is wanted — when the detailed spec is too ambitious to ship as one piece, when a `MVP_*_DEFERRED.md` sibling is useful for downstream `/extend-features` consumption, or when the AC need a tighter slice than the full vision. Skip otherwise.
 - **Both modes.** Project mode consumes a `DETAILED_*` spec from `/detailed-specification`. Feature mode consumes an extend output from `/extend-features`. The two upstream artifacts are structurally identical; only frontmatter (`mode`, `parent_spec`) and filename diverge.
 - **Both surfaces.** Claude Code with the target repo on disk, and claude.ai chat without a repo. The skill detects which and adapts validation, output location, and template-knowledge sourcing.
 - **Requires an upstream spec.** No upstream → refuse and suggest the upstream skill. Don't elicit the upstream spec inline; don't auto-fall-through.
@@ -183,7 +184,7 @@ Each criterion has:
 
 - **Number** — sectioned (auth: 1.1, 1.2; entries: 2.1, 2.2; etc.). Sections group by user flow or domain.
 - **Tag** — `[BLOCKING]` or `[NICE_TO_HAVE]`. The skill recommends; the user decides. Default: items in primary user flows are `[BLOCKING]`; auxiliary polish is `[NICE_TO_HAVE]`.
-- **Pre-conditions** — first-class field. State the world-state required before the criterion applies (e.g. "Given a logged-in user with at least one entry, …"). Pre-conditions can reference earlier criteria's success ("Given criterion 1.1 has succeeded, …") because `/build-mvp` runs criteria in order.
+- **Pre-conditions** — first-class field. State the world-state required before the criterion applies (e.g. "Given a logged-in user with at least one entry, …"). Pre-conditions can reference earlier criteria's success ("Given criterion 1.1 has succeeded, …") because `/build-from-spec` runs criteria in order.
 - **Criterion text** — EARS-flavored prose.
 - **Optional `[USER_VERIFIES]` tag** — for criteria that can't be machine-verified (e.g. "the dashboard shows three tiles in a visually pleasant order"). Mark these explicitly. The build agent will surface them to the user for manual sign-off.
 
@@ -219,13 +220,13 @@ WHEN the user opens the entries list, the entries shall appear in reverse-chrono
 
 #### Coverage discipline
 
-For everything in the MVP, comprehensive error path coverage is required. The user reviews the spec before `/build-mvp` runs, so over-specification is the right side to err on. If a happy path has a criterion, its primary error path needs one too.
+For everything in the MVP, comprehensive error path coverage is required. The user reviews the spec before `/build-from-spec` runs, so over-specification is the right side to err on. If a happy path has a criterion, its primary error path needs one too.
 
 UI-only behavioral assertions are allowed as `[USER_VERIFIES]` prose criteria.
 
 #### No cap on count
 
-Don't artificially trim criteria. `/build-mvp` loops on each up to 3 attempts, so the count matters for build time — but completeness matters more. The user sees the spec before build runs.
+Don't artificially trim criteria. `/build-from-spec` loops on each up to 3 attempts, so the count matters for build time — but completeness matters more. The user sees the spec before build runs.
 
 ### Step 10 — Pre-write validation
 
@@ -340,16 +341,16 @@ In both cases:
 
 ## What this skill does not do
 
-- **Does not implement code.** Code is `/build-mvp`'s job.
-- **Does not validate criteria by running them.** Verification is `/build-mvp`.
-- **Does not move specs to `IMPLEMENTED/`.** That's `/build-mvp` after a successful build.
+- **Does not implement code.** Code is `/build-from-spec`'s job.
+- **Does not validate criteria by running them.** Verification is `/build-from-spec`.
+- **Does not move specs to `IMPLEMENTED/`.** That's `/build-from-spec` after a successful build.
 - **Does not invoke `/interview-me`.** If the upstream spec has deep gaps that one round of MVP-relevant `[OPEN]` resolution can't fix, push the user back to re-run the upstream skill (`/detailed-specification` or `/extend-features`).
 - **Does not modify the upstream spec.** `[OPEN]` markers in the upstream stay untouched even after MVP-relevant ones are resolved here.
 - **Does not propose new integrations in project mode.** Detailed-spec integration decisions are immutable at this stage.
 
 ## Frontmatter contract
 
-The frontmatter this skill writes is the contract for `/build-mvp`:
+The frontmatter this skill writes is the contract for `/build-from-spec`:
 
 | Field | Value |
 |---|---|
@@ -361,7 +362,7 @@ The frontmatter this skill writes is the contract for `/build-mvp`:
 | `status` | `"NOT_YET_IMPLEMENTED"` |
 | `parent_spec` | The upstream spec's filename (e.g. `DETAILED_PAGEMARK_20260427.md`) |
 
-`/build-mvp` will validate this frontmatter shape, the presence of `ACCEPTANCE_CRITERIA`, and that every criterion has a number, tag, pre-conditions, and prose. Criterion verification (whether the criterion can be reduced to a passing assertion) is `/build-mvp`'s responsibility, not this skill's.
+`/build-from-spec` will validate this frontmatter shape, the presence of `ACCEPTANCE_CRITERIA`, and that every criterion has a number, tag, pre-conditions, and prose. Criterion verification (whether the criterion can be reduced to a passing assertion) is `/build-from-spec`'s responsibility, not this skill's.
 
 ## ACCEPTANCE_CRITERIA contract
 

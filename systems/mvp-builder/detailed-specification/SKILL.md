@@ -7,13 +7,13 @@ description: Use this skill whenever the user wants to turn a software project i
 
 This skill takes messy user input describing a new software project and produces a complete, concrete, stack-aware **detailed specification** — the full vision of what the user wants to build, before any scope-cutting.
 
-The output is the input to `/mvp-specification`, which is responsible for cutting scope. If the detailed spec is already MVP-shaped, the next skill has nothing to do. So bias toward completeness and ambition, not minimalism.
+The output flows to either `/mvp-specification` (which cuts scope) or directly to `/build-from-spec` (when the detailed spec is already buildable as-is). `/mvp-specification` is optional — the pipeline supports both paths. Bias the detailed spec toward completeness and ambition: capture the full vision with comprehensive `ACCEPTANCE_CRITERIA`, then either let `/mvp-specification` cut the slice that ships first or hand the full spec straight to the build.
 
 ## Boundaries
 
 - **Project mode only.** The first detailed spec for a new repo. For adding features to an existing repo, the user should run `/extend-features` instead.
 - **One target template.** The user picks one of three: `kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`. The spec is stack-aware from the start.
-- **No `ACCEPTANCE_CRITERIA` section.** That's `/mvp-specification`'s responsibility; the bar is different.
+- **`ACCEPTANCE_CRITERIA` is required.** Write the full-vision criteria here (EARS-flavored prose, sectioned, with pre-conditions). `/mvp-specification` may revise them down to a tighter MVP slice if invoked, but the detailed spec must carry AC because `/build-from-spec` may consume it directly.
 - **No silent decisions.** Every fact in the spec must trace to either user input, a follow-up answer, or an explicit `[OPEN: <question>]` marker. The skill never invents content the user didn't approve.
 
 ## Workflow
@@ -201,14 +201,19 @@ parent_spec: ""
 
 **Sections** (per the target repo's `SPEC_TEMPLATE.md`):
 
-1. Problem statement
-2. User flows
-3. Data model changes (or "Content model changes" for `statix`)
-4. Architecture hints
-5. Integrations (omit this section entirely for `statix`)
-6. Out of scope
+1. `ACCEPTANCE_CRITERIA` (see below)
+2. Problem statement
+3. User flows
+4. Data model changes (or "Content model changes" for `statix`)
+5. Architecture hints
+6. Integrations (omit this section entirely for `statix`)
+7. Out of scope
 
-**Omit the `ACCEPTANCE_CRITERIA` section entirely.** Don't include an empty placeholder. The MVP skill's bar is different and the empty section creates noise.
+**`ACCEPTANCE_CRITERIA` is now first-class.** Write the section per the target repo's contract: sectioned-numbered (1.1, 1.2, 2.1, …, grouped by user flow or domain), tagged `[BLOCKING]` or `[NICE_TO_HAVE]` (untagged defaults to `[BLOCKING]`), with optional `[USER_VERIFIES]` for non-machine-verifiable criteria. Each criterion carries a `Pre-conditions:` line and EARS-flavored prose body (`WHEN <event>` / `WHILE <state>` / `WHERE <feature>` / `IF <unwanted condition> THEN` / ubiquitous `the system shall <response>`, combinable).
+
+Why this is here, not deferred: `/mvp-specification` is **optional**. The pipeline can flow detailed → build-from-spec directly when scope-cutting isn't needed. So the detailed spec must carry AC for the build agent to consume. When `/mvp-specification` is invoked, it produces a tighter scope and may revise the AC; the detailed spec's AC describes the full vision.
+
+For project mode, write criteria covering everything the project should do — the full vision. Comprehensive error path coverage is required. Don't trim "for the MVP" — that's `/mvp-specification`'s job if it's invoked.
 
 ### Step 9 — Self-check
 
@@ -218,7 +223,7 @@ After writing, verify:
 - No template placeholder text survives in the output (`<short feature name>`, `<YYYY-MM-DD>`, `<Why this feature exists...>`, etc.).
 - Frontmatter is valid YAML.
 - All `[OPEN: ...]` markers correspond to actual unanswered questions, not accidental leftovers.
-- No accidental ACCEPTANCE_CRITERIA section.
+- `ACCEPTANCE_CRITERIA` is present, sectioned-numbered, every criterion has tag + pre-conditions + prose.
 
 If any check fails, fix it. If a fix isn't possible (e.g. template mismatch), surface the failure to the user.
 
@@ -245,7 +250,7 @@ In both cases:
 ## What this skill does not do
 
 - **Does not invoke `/interview-me` automatically.** If input is too thin, suggest the user run it. After the suggestion, control returns to the user — they re-invoke this skill when they have better input.
-- **Does not write the MVP spec.** That's `/mvp-specification`'s job. This skill produces the detailed (full vision) spec.
+- **Does not write the MVP spec.** That's `/mvp-specification`'s job (when invoked — it's optional). This skill produces the detailed (full vision) spec, including `ACCEPTANCE_CRITERIA` covering the full vision.
 - **Does not handle feature additions.** Feature mode goes through `/extend-features`, which is a sibling entry-point skill.
 - **Does not deploy, build, or modify code.** Spec-only.
 - **Does not move specs between `NOT_YET_IMPLEMENTED/` and `IMPLEMENTED/`.** That's `/build-mvp`'s responsibility after a successful build.
@@ -264,7 +269,7 @@ The frontmatter this skill writes is the contract for downstream skills:
 | `status` | `"NOT_YET_IMPLEMENTED"` |
 | `parent_spec` | `""` (always empty for project-mode detailed specs) |
 
-`/mvp-specification` validates these fields before consuming the spec. An empty `parent_spec` is the unique signature of a project-mode detailed spec; if the field is non-empty, this skill produced it incorrectly.
+`/mvp-specification` and `/build-from-spec` both validate these fields before consuming the spec. An empty `parent_spec` is the unique signature of a project-mode detailed spec; if the field is non-empty, this skill produced it incorrectly.
 
 ## Examples
 
@@ -290,4 +295,4 @@ Question batch includes: "The input contradicts itself on monetization — shoul
 
 User answers 18 of 20 follow-up questions. Two questions get "idk" with no rationale.
 
-Skill writes the spec, but the relevant sections include `[OPEN: <question>]` markers verbatim. The user is told the spec is incomplete and which questions remain. The downstream MVP skill will see the markers and refuse to consume the spec until they're resolved.
+Skill writes the spec, but the relevant sections include `[OPEN: <question>]` markers verbatim. The user is told the spec is incomplete and which questions remain. Downstream skills (`/mvp-specification` or `/build-from-spec`) see the markers and refuse to consume the spec until they're resolved.

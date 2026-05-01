@@ -1,11 +1,13 @@
 ---
-name: build-mvp
-description: Use this skill when the user wants to implement an MVP spec (or feature MVP spec) end-to-end against the live repo. Trigger on phrases like "build it", "implement this MVP", "go through the acceptance criteria", "run the build", "execute the spec". Consumes a `MVP_*.md` (or `MVP_{FEATURE_NAME}_*.md`) from `SPECIFICATIONS/NOT_YET_IMPLEMENTED/` and runs a sequential criterion-by-criterion loop, committing per criterion on success and rolling back via `git reset` on failed attempts. Claude Code only — this skill writes code, runs commands, generates migrations, and makes commits. Designed for autonomous operation where possible. Refuses if the working tree is dirty or the user is not on `main`.
+name: build-from-spec
+description: Use this skill when the user wants to implement a specification end-to-end against the live repo. Trigger on phrases like "build it", "implement this spec", "go through the acceptance criteria", "run the build", "execute the spec". Consumes any spec from `SPECIFICATIONS/NOT_YET_IMPLEMENTED/` that carries an `ACCEPTANCE_CRITERIA` section — detailed (project|feature) or MVP (project|feature). Runs a sequential criterion-by-criterion loop, committing per criterion on success and rolling back via `git reset` on failed attempts. Claude Code only — this skill writes code, runs commands, generates migrations, and makes commits. Designed for autonomous operation where possible. Refuses if the working tree is dirty or the user is not on `main`.
 ---
 
-# build-mvp
+# build-from-spec
 
-This skill consumes an MVP specification and implements it against the live repo. One commit per acceptance criterion, sequential execution, per-attempt rollback via `git reset`, and an end-of-build report.
+This skill consumes a specification carrying acceptance criteria and implements it against the live repo. One commit per acceptance criterion, sequential execution, per-attempt rollback via `git reset`, and an end-of-build report.
+
+The input spec can be a detailed spec (project or feature mode) or an MVP spec (project or feature mode). The skill keys on the presence of an `ACCEPTANCE_CRITERIA` section, not the filename prefix. This means `/mvp-specification` is optional — you can flow detailed → build directly when scope-cutting isn't needed, or detailed → mvp → build when it is.
 
 The skill runs in the context of a freshly-cloned repo (project mode) or an existing implemented repo (feature mode). It always reads the live template's `CLAUDE.md` to enforce the Principles section and use the agent-writable Reference section as guidance.
 
@@ -14,10 +16,11 @@ The bias is toward **autonomy where possible, transparency where not**. The skil
 ## Boundaries
 
 - **Claude Code only.** This skill executes code, runs commands, generates migrations, and writes commits. There is no claude.ai surface for it.
-- **Both modes.** Project mode (consumes `MVP_{YYYYMMDD}_SPEC.md`) and feature mode (consumes `MVP_{FEATURE_NAME}_{YYYYMMDD}.md`). Same workflow with mode-specific differences in post-build artifact updates.
-- **Re-runnable.** `/build-mvp` is on the critical path for full builds, extension, and fixing previously-failed criteria. The same invocation handles all three — it detects already-passed criteria via git history and decides what to attempt.
+- **Both modes.** Project mode and feature mode. Same workflow with mode-specific differences in post-build artifact updates.
+- **Any spec with AC.** Accepts detailed specs (project or feature mode) and MVP specs (project or feature mode). The skill keys on the `ACCEPTANCE_CRITERIA` section being present and well-formed, not on the filename prefix.
+- **Re-runnable.** This skill is on the critical path for full builds, extension, and fixing previously-failed criteria. The same invocation handles all three — it detects already-passed criteria via git history and decides what to attempt.
 - **Sequential per criterion.** No parallel execution. Criteria run in spec order (sectioned numbering: 1.1, 1.2, 2.1, …).
-- **Trust the upstream.** The MVP spec was produced by `/mvp-specification`. Don't re-validate the AC contract structure — only check that `ACCEPTANCE_CRITERIA` and the spec body are present.
+- **Trust the upstream.** The spec was produced by `/detailed-specification`, `/extend-features`, or `/mvp-specification`. Don't re-validate the AC contract structure — only check that `ACCEPTANCE_CRITERIA` and the spec body are present.
 - **No state file.** The git history is the progress log. The skill greps commit messages to detect already-passed criteria.
 - **Persistent verification wherever possible.** Each criterion's verification is written as a runnable artifact (test file, fixture-based assertion) that anyone can re-run later. Transient verification only when the criterion can't be persisted (most `[USER_VERIFIES]` cases).
 - **Enforces template Principles.** The Principles section of `CLAUDE.md` (changes are surgical, no speculative abstractions, lazy-init, etc.) is policy. The agent-writable Reference section is guidance.
@@ -33,23 +36,28 @@ Validate the working tree:
 
 If either fails, **refuse**. Don't try to stash, switch branches, or otherwise mutate state. The user resolves their own working state.
 
-### Step 2 — Locate and validate the MVP spec
+### Step 2 — Locate and validate the spec
 
-Look in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/` for `MVP_*.md` files.
+Look in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/` for any `*.md` file that carries an `ACCEPTANCE_CRITERIA` section. Acceptable inputs:
+
+- `MVP_{YYYYMMDD}_SPEC.md` — project-mode MVP spec.
+- `MVP_{FEATURE_NAME}_{YYYYMMDD}.md` — feature-mode MVP spec.
+- `DETAILED_{PROJECT_NAME}_{YYYYMMDD}.md` — project-mode detailed spec (when `/mvp-specification` was bypassed).
+- `DETAILED_{FEATURE_NAME}_{YYYYMMDD}.md` — feature-mode detailed spec (when `/mvp-specification` was bypassed).
 
 **Refusal cases:**
 
-- **No MVP spec found.** Refuse. Suggest `/mvp-specification` (which itself requires an upstream `/detailed-specification` or `/extend-features` output).
-- **Multiple MVP specs that look like duplicates** (same project, or same feature name across days). Refuse. Surface the candidates to the user and ask which one to build.
-- **Single MVP spec found.** Proceed with it.
-- **Multiple MVP specs that are clearly distinct features** (different feature names, no project-mode conflict). Ask the user which one to build.
+- **No spec with AC found.** Refuse. Suggest `/detailed-specification`, `/extend-features`, or `/mvp-specification` depending on what the user is trying to do.
+- **Multiple specs that look like duplicates** (same project, or same feature name across days). Refuse. Surface the candidates to the user and ask which one to build.
+- **Single spec found** with AC. Proceed with it.
+- **Multiple distinct specs** (different feature names, or detailed + MVP for the same project). Ask the user which one to build. If both detailed and MVP exist for the same scope, prefer the MVP (it's the tighter cut) unless the user says otherwise.
 
 Validate the spec contains:
 
 - An `ACCEPTANCE_CRITERIA` section with at least one criterion.
-- Frontmatter with `spec_type: mvp`, `mode`, `name`, `template`.
+- Frontmatter with `spec_type` (`detailed` or `mvp`), `mode`, `name`, `template`.
 
-Don't deeply re-validate the AC contract (numbering format, pre-condition presence, etc.). Trust that `/mvp-specification` produced it correctly. The spec body provides build context.
+Don't deeply re-validate the AC contract (numbering format, pre-condition presence, etc.). Trust that the upstream skill produced it correctly. The spec body provides build context.
 
 #### Allowed-but-warned: every criterion is `[USER_VERIFIES]`
 
@@ -75,7 +83,7 @@ Read `mode` from the spec frontmatter.
 
 Load **once-per-build** into working memory:
 
-- The full MVP spec (frontmatter + body + ACCEPTANCE_CRITERIA).
+- The full input spec (frontmatter + body + ACCEPTANCE_CRITERIA).
 - The template's `CLAUDE.md` — both the Principles section (above the divider) and the agent-writable Reference section (below).
 - `DATABASEMODEL.md` if it exists (kitchen-sink-ts and twotier; statix has none).
 
@@ -104,7 +112,7 @@ For each already-passed criterion:
 - **If the criterion has a persistent verification artifact** (test file, fixture-based assertion in the repo): re-run the verification. If it still passes, mark passed and skip implementation. If it now fails (regression), surface to the user and ask: re-implement, accept the regression, or abort.
 - **If the criterion has no persistent verification** (USER_VERIFIES, or some other transient case): trust the prior commit. Mark passed and skip. Do not re-attempt.
 
-This makes `/build-mvp` safe to re-run after a partial success — it picks up from where it left off without re-doing finished work.
+This makes `/build-from-spec` safe to re-run after a partial success — it picks up from where it left off without re-doing finished work.
 
 ### Step 8 — Per-criterion loop
 
@@ -175,7 +183,7 @@ For each `[USER_VERIFIES]` criterion:
 3. Add the criterion to the end-of-build report's "needs human review" queue.
 4. Continue to the next criterion. Do not block.
 
-The user reviews the implementation offline. Iteration on USER_VERIFIES criteria (the user wants something fixed) happens via a separate `/build-mvp` re-run — for v1, that re-run treats the criterion as "already attempted" and the user must explicitly request re-implementation. Async signal-based re-attempts are out of scope for v1.
+The user reviews the implementation offline. Iteration on USER_VERIFIES criteria (the user wants something fixed) happens via a separate `/build-from-spec` re-run — for v1, that re-run treats the criterion as "already attempted" and the user must explicitly request re-implementation. Async signal-based re-attempts are out of scope for v1.
 
 ### Step 9 — Mid-build interactions
 
@@ -213,10 +221,10 @@ Each artifact update is its own commit, messaged conventionally:
 
 **Only if at least one criterion passed**, move the spec from `NOT_YET_IMPLEMENTED/` to `IMPLEMENTED/` with the `IMPLEMENTED_` prefix in a separate commit (after the implementation commits and the artifact-update commits).
 
-- File: `SPECIFICATIONS/NOT_YET_IMPLEMENTED/MVP_*.md` → `SPECIFICATIONS/IMPLEMENTED/IMPLEMENTED_MVP_*.md`.
+- File: `SPECIFICATIONS/NOT_YET_IMPLEMENTED/<spec>.md` → `SPECIFICATIONS/IMPLEMENTED/IMPLEMENTED_<spec>.md`. The `IMPLEMENTED_` prefix is added regardless of whether the input was a `DETAILED_` or `MVP_` spec.
 - Commit message: `chore(specs): mark <spec name> as implemented`.
 
-**If zero criteria passed** (total failure): the spec **stays in `NOT_YET_IMPLEMENTED/`**. Nothing was actually built; the lifecycle stays open for a future `/build-mvp` re-run.
+**If zero criteria passed** (total failure): the spec **stays in `NOT_YET_IMPLEMENTED/`**. Nothing was actually built; the lifecycle stays open for a future `/build-from-spec` re-run.
 
 The DEFERRED sibling (`MVP_{YYYYMMDD}_DEFERRED.md` or `MVP_{FEATURE_NAME}_{YYYYMMDD}_DEFERRED.md`) **stays in `NOT_YET_IMPLEMENTED/` regardless**. It's not moved with the implemented spec. `/extend-features` reads it later to source candidate work.
 
@@ -227,7 +235,7 @@ Write `AGENT_REPORTS/BUILD_REPORT_{YYYYMMDD}_{HHMM}.md` with:
 ```yaml
 ---
 report_type: "build"
-spec_consumed: "<MVP spec filename>"
+spec_consumed: "<spec filename>"
 mode: "<project | feature>"
 template: "<template name>"
 build_started: "<ISO 8601 timestamp>"
@@ -260,7 +268,7 @@ In the chat output:
 
 - One sentence: how many criteria attempted, how many passed, how many failed, how many pending review.
 - The path to the report file.
-- The spec's new location (`IMPLEMENTED/IMPLEMENTED_MVP_*.md` if ≥1 passed; still in `NOT_YET_IMPLEMENTED/` if zero).
+- The spec's new location (`IMPLEMENTED/IMPLEMENTED_<spec>.md` if ≥1 passed; still in `NOT_YET_IMPLEMENTED/` if zero).
 - Any criteria pending user review, with the commit SHAs (so the user can `git show` them).
 - Don't dump the full report into chat — the file is the deliverable.
 
@@ -269,7 +277,7 @@ Don't ask "anything else?" Don't add a closing line.
 ## What this skill does not do
 
 - **Does not run on claude.ai chat.** Claude Code only.
-- **Does not invoke other skills.** No auto-suggesting `/railway-deployment-{template}`. No auto-fall-through to `/mvp-specification` if the MVP spec is missing — refuse and tell the user to run it.
+- **Does not invoke other skills.** No auto-suggesting `/railway-deployment`. No auto-fall-through to `/mvp-specification` or the upstream spec skills if a spec is missing — refuse and tell the user to run the right upstream skill.
 - **Does not modify the spec.** The spec is read-only input. Move it through the lifecycle, but don't edit its content.
 - **Does not re-implement passed criteria** unless the user explicitly asks. Re-runs detect prior passes via git history and skip them (or re-verify if a persistent artifact exists).
 - **Does not pause synchronously on `[USER_VERIFIES]`.** Implements, commits, queues for review, continues.
@@ -279,11 +287,11 @@ Don't ask "anything else?" Don't add a closing line.
 
 ## Frontmatter contract (consumed)
 
-The MVP spec frontmatter the skill reads:
+The input spec frontmatter the skill reads:
 
 | Field | Used for |
 |---|---|
-| `spec_type` | Must be `"mvp"`. Refuse otherwise. |
+| `spec_type` | Must be `"detailed"` or `"mvp"`. Refuse otherwise. |
 | `mode` | Drives Step 4 (post-build artifact policy). |
 | `name` | Used in commit messages and the build report. |
 | `date_started` | Surfaced in the build report. |
@@ -323,7 +331,7 @@ The `criterion N.M` token is grep-able. Step 7 uses it to detect already-passed 
 
 ### Example 1 — clean project-mode build
 
-User invokes `/build-mvp` in a freshly-cloned `kitchen-sink-ts` repo. `MVP_20260501_SPEC.md` exists in `NOT_YET_IMPLEMENTED/` with 17 criteria across 5 sections (auth, capture, browse-list, today's review, summarize). All `[BLOCKING]`, three `[USER_VERIFIES]`.
+User invokes `/build-from-spec` in a freshly-cloned `kitchen-sink-ts` repo. `MVP_20260501_SPEC.md` exists in `NOT_YET_IMPLEMENTED/` with 17 criteria across 5 sections (auth, capture, browse-list, today's review, summarize). All `[BLOCKING]`, three `[USER_VERIFIES]`.
 
 Skill runs: clean tree ✓, on main ✓, single MVP spec ✓, template matches ✓.
 
@@ -335,13 +343,13 @@ Chat: "16 of 17 criteria passed (3 pending user review). 1 failed: criterion 4.2
 
 ### Example 2 — refusal: dirty tree
 
-User invokes `/build-mvp`. Working tree has uncommitted changes in `src/lib/db/schema.ts`.
+User invokes `/build-from-spec`. Working tree has uncommitted changes in `src/lib/db/schema.ts`.
 
 Skill: refuses in two paragraphs. First: "Working tree has uncommitted changes in src/lib/db/schema.ts. /build-mvp requires a clean tree on main so per-attempt rollback works." Second: "Commit or stash your changes, then re-run."
 
 ### Example 3 — re-run after partial success
 
-User invokes `/build-mvp` again on the same repo as Example 1. Spec is now in `IMPLEMENTED/`, but the user wants to re-attempt criterion 4.2 (which previously failed). They first move the spec back to `NOT_YET_IMPLEMENTED/` manually.
+User invokes `/build-from-spec` again on the same repo as Example 1. Spec is now in `IMPLEMENTED/`, but the user wants to re-attempt criterion 4.2 (which previously failed). They first move the spec back to `NOT_YET_IMPLEMENTED/` manually.
 
 Skill runs Step 7: greps the log, finds `criterion 1.1` through `criterion 4.1` and `criterion 4.3` through `criterion 5.4` as prior commits. Re-verifies the persistent ones (most pass). Marks them passed. Identifies criterion 4.2 as the only un-attempted-this-build criterion in the un-skipped graph.
 
@@ -349,7 +357,7 @@ Implements 4.2 (this time with a different cache strategy — uses the prior fai
 
 ### Example 4 — feature mode with cross-spec contradiction
 
-User invokes `/build-mvp` in a repo that already has `IMPLEMENTED/IMPLEMENTED_MVP_20260301_SPEC.md` (PageMark v1). `NOT_YET_IMPLEMENTED/` has `MVP_PAGEMARK_MONETIZATION_20260501.md` (a feature spec re-enabling Polar).
+User invokes `/build-from-spec` in a repo that already has `IMPLEMENTED/IMPLEMENTED_MVP_20260301_SPEC.md` (PageMark v1). `NOT_YET_IMPLEMENTED/` has `MVP_PAGEMARK_MONETIZATION_20260501.md` (a feature spec re-enabling Polar).
 
 Skill detects feature mode from the spec's `mode: feature`. Reads `IMPLEMENTED_MVP_20260301_SPEC.md` because criterion 2.1 of the new spec references "the existing entry list view". Detects the new spec requires Polar to be enabled (was REMOVE in the original). Implements env wiring, product setup, checkout, webhook, gating.
 
@@ -357,7 +365,7 @@ Post-build: appends Reference section delta in `CLAUDE.md` (new file map entries
 
 ### Example 5 — total failure
 
-User invokes `/build-mvp` on a spec where every criterion fails after 3 attempts (the spec is poorly aligned with what the template can support — assumes capabilities that don't exist).
+User invokes `/build-from-spec` on a spec where every criterion fails after 3 attempts (the spec is poorly aligned with what the template can support — assumes capabilities that don't exist).
 
 Skill loops, every criterion `FAILED`. **Spec stays in `NOT_YET_IMPLEMENTED/`** — nothing was built. Post-build artifact updates skipped (nothing to document). Report written with detailed failure summaries per criterion.
 

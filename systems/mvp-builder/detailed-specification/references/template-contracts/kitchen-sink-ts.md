@@ -12,7 +12,7 @@ Use this snapshot only as a fallback when the live template can't be reached. No
 - Sections (in order): `ACCEPTANCE_CRITERIA`, `Problem statement`, `User flows`, `Data model changes`, `Architecture hints`, `Integrations`, `Out of scope`
 - Integrations tracked: `auth`, `polar`, `r2`, `openrouter`
 
-For a project-mode detailed spec, **omit the `ACCEPTANCE_CRITERIA` section entirely** — it's the MVP skill's responsibility.
+The detailed spec **carries `ACCEPTANCE_CRITERIA`** describing the full vision (sectioned-numbered, EARS-flavored prose, with pre-conditions). `/mvp-specification` is optional — when invoked it may revise the AC down to an MVP slice; when bypassed, `/build-from-spec` consumes the detailed spec's AC directly.
 
 ## Literal template content
 

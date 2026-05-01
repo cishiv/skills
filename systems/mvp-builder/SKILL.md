@@ -1,43 +1,41 @@
 ---
 name: mvp-builder
-description: Skill system for taking a software project from idea to deployed MVP using the user's three template repos (kitchen-sink-ts, kitchen-sink-twotier, statix). The pipeline is detailed-specification → mvp-specification → build-mvp → railway-deployment, with extend-features as a sibling entry point for adding features to existing repos. Trigger when the user wants to spec out a new project, scope an MVP, build against acceptance criteria, deploy to Railway, or extend an existing project. Currently only the detailed-specification stage is implemented; other stages are roadmapped and will be added as they are scoped.
+description: Skill system for taking a software project from idea to deployed app using the user's three template repos (kitchen-sink-ts, kitchen-sink-twotier, statix). The pipeline is detailed-specification → [mvp-specification?] → build-from-spec → railway-deployment, with extend-features as a sibling entry point for adding features to existing repos. `/mvp-specification` is optional — flow detailed → build directly when scope-cutting isn't needed. Trigger when the user wants to spec out a new project, scope an MVP, build against acceptance criteria, deploy to Railway, or extend an existing project.
 ---
 
 # mvp-builder
 
-A bundled skill system for taking an idea from "scratchpad" to "deployed MVP" using the user's pre-existing template repos: `kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`.
+A bundled skill system for taking an idea from "scratchpad" to "deployed" using the user's pre-existing template repos: `kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`.
 
 ## Pipeline
 
-Two entry points, shared tail.
+Two entry points, shared tail. `/mvp-specification` is **optional** — invoke it when scope-cutting is wanted; skip when the detailed spec is already buildable as-is.
 
 **Project mode** (new repo)
-`detailed-specification` → `mvp-specification` → `build-mvp` → `railway-deployment`
+`detailed-specification` → `[mvp-specification?]` → `build-from-spec` → `railway-deployment`
 
 **Feature mode** (existing repo)
-`extend-features` → `mvp-specification` → `build-mvp` → `git push`
+`extend-features` → `[mvp-specification?]` → `build-from-spec` → `git push`
 
 ## Stage map
 
 | Stage | Status | Sub-skill | Notes |
 |---|---|---|---|
-| `detailed-specification` | ✅ implemented | `detailed-specification/` | Project-mode detailed spec. Both surfaces (Claude Code, claude.ai). |
-| `mvp-specification` | ✅ implemented | `mvp-specification/` | Cuts scope. Writes EARS-flavored prose ACCEPTANCE_CRITERIA + atomic DEFERRED sibling. Handles both modes, both surfaces. |
-| `build-mvp` | ✅ implemented | `build-mvp/` | Sequential per-criterion loop with `git reset` rollback per attempt. One commit per criterion. Persistent verification artifacts. End-of-build report. Both modes. Claude Code only. |
+| `detailed-specification` | ✅ implemented | `detailed-specification/` | Project-mode detailed spec. Carries full-vision `ACCEPTANCE_CRITERIA`. Both surfaces (Claude Code, claude.ai). |
+| `extend-features` | ✅ implemented | `extend-features/` | Feature-mode entry point. Reads existing repo state, anchors with "What's already in place" preamble, supports post-hoc MVP backfill. Carries `ACCEPTANCE_CRITERIA`. Claude Code only. |
+| `mvp-specification` | ✅ implemented (optional) | `mvp-specification/` | Cuts scope when wanted. Writes a tighter `ACCEPTANCE_CRITERIA` + atomic `MVP_*_DEFERRED.md` sibling. Handles both modes, both surfaces. **Skippable** — pipeline supports detailed → build directly. |
+| `build-from-spec` | ✅ implemented | `build-from-spec/` | Consumes any spec with `ACCEPTANCE_CRITERIA` (detailed or MVP, project or feature). Sequential per-criterion loop with `git reset` rollback per attempt. One commit per criterion. Persistent verification artifacts. End-of-build report. Claude Code only. |
 | `railway-deployment` | ✅ implemented | `railway-deployment/` | First-time provisioning + first deploy. Single parameterized skill across all three templates. Project mode only — feature-mode "deploy" is just `git push`. Claude Code only. Requires Railway MCP and `web_fetch`. |
-| `extend-features` | ⚪ not yet built | — | Feature-mode entry point. Reads existing repo state. |
 
 ## Routing
 
 Pick the right sub-skill from what the user asked for:
 
 - **"spec out my idea" / "turn this brain dump into a project spec" / "I want to build X"** → load `detailed-specification/SKILL.md` and follow its workflow.
-- **"cut scope" / "make this an MVP" / "add acceptance criteria" / "MVP this"** → load `mvp-specification/SKILL.md` and follow its workflow. Requires an upstream `DETAILED_*` (project mode) or extend output (feature mode).
-- **"build it" / "implement this spec" / "go through the acceptance criteria" / "run the build"** → load `build-mvp/SKILL.md` and follow its workflow. Requires an `MVP_*.md` in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/`. Claude Code only — refuses on dirty tree or non-main branch.
+- **"extend this project" / "add a feature to my repo" / "let's add X to the existing app"** → load `extend-features/SKILL.md` and follow its workflow. Claude Code only; needs the target repo on disk.
+- **"cut scope" / "make this an MVP" / "scope this down" / "MVP this"** → load `mvp-specification/SKILL.md` and follow its workflow. Optional in the pipeline. Requires an upstream detailed spec.
+- **"build it" / "implement this spec" / "go through the acceptance criteria" / "run the build"** → load `build-from-spec/SKILL.md` and follow its workflow. Requires a spec with `ACCEPTANCE_CRITERIA` in `SPECIFICATIONS/NOT_YET_IMPLEMENTED/`. Claude Code only — refuses on dirty tree or non-main branch.
 - **"deploy to Railway" / "ship it" / "first deploy"** → load `railway-deployment/SKILL.md` and follow its workflow. Project mode only — first-time provisioning + first deploy. Subsequent deploys are `git push`. Requires Railway MCP and `web_fetch`. Claude Code only.
-- **"extend this project" / "add a feature to my repo"** → not yet built.
-
-Don't simulate stages that aren't built. If the user asks for `mvp-specification` or later, say it isn't implemented yet and stop. Stages that exist will be added under this directory as standalone sub-skill folders.
 
 ## Conventions all sub-skills inherit
 
@@ -46,13 +44,13 @@ These are the contracts the three template repos enforce. Sub-skills validate ag
 - `SPECIFICATIONS/` directory with `NOT_YET_IMPLEMENTED/`, `IMPLEMENTED/`, `DESIGN/`.
 - `SPEC_TEMPLATE.md` and `HOW_TO_USE_SPECIFICATION.md` define the contract.
 - Spec frontmatter: `spec_type`, `mode`, `name`, `date_started`, `template`, `status`, `parent_spec`.
-- ACCEPTANCE_CRITERIA reduces to either a command exiting 0 or an HTTP request returning a Zod-validated response.
+- `ACCEPTANCE_CRITERIA` is sectioned-numbered, EARS-flavored prose with first-class pre-conditions, tagged `[BLOCKING]` / `[NICE_TO_HAVE]` (untagged defaults to `[BLOCKING]`), with optional `[USER_VERIFIES]` for criteria that can't be machine-asserted. The build agent picks the verification mechanism per criterion from each template's menu.
 - `CLAUDE.md` split into Principles (above the divider) + Reference (below `<!-- AGENT-WRITABLE BELOW -->`, regenerated by build/extend skills).
 - Lazy-init for env-dependent SDKs. Apps boot with empty `.env`. Statix has no env, no DB.
 
 ## What this skill is not
 
-- **Not an orchestrator.** It does not track state across stages, maintain checklists, or remember where you left off. Each sub-skill validates its own upstream artifacts (frontmatter is the contract) and resumes from there. The state-tracking orchestrator was explicitly deferred — revisit only after two complete real runs.
+- **Not an orchestrator.** It does not track state across stages, maintain checklists, or remember where you left off. Each sub-skill validates its own upstream artifacts (frontmatter is the contract) and resumes from there. The state-tracking orchestrator was explicitly deferred — revisit only after multiple complete real runs.
 - **Not a substitute for the sub-skills.** Loading this SKILL.md doesn't load the sub-skill bodies. When routing, actually load the targeted sub-skill's `SKILL.md`.
 - **Not a feature-flag for missing stages.** If a stage isn't in the table above as ✅, it doesn't exist. Don't fake it.
 
@@ -61,9 +59,9 @@ These are the contracts the three template repos enforce. Sub-skills validate ag
 | Skill | Mode | Filename |
 |---|---|---|
 | `detailed-specification` | project | `DETAILED_{PROJECT_NAME}_{YYYYMMDD}.md` |
-| `mvp-specification` | project | `MVP_{YYYYMMDD}_SPEC.md` |
 | `extend-features` | feature | `DETAILED_{FEATURE_NAME}_{YYYYMMDD}.md` |
+| `mvp-specification` | project | `MVP_{YYYYMMDD}_SPEC.md` |
 | `mvp-specification` | feature | `MVP_{FEATURE_NAME}_{YYYYMMDD}.md` |
 | out-of-MVP siblings | both | `MVP_{YYYYMMDD}_DEFERRED.md` / `MVP_{FEATURE_NAME}_{YYYYMMDD}_DEFERRED.md` |
-| `build-mvp` deploy report | both | `AGENT_REPORTS/BUILD_REPORT_{YYYYMMDD}_{HHMM}.md` (not committed) |
+| `build-from-spec` build report | both | `AGENT_REPORTS/BUILD_REPORT_{YYYYMMDD}_{HHMM}.md` (not committed) |
 | `railway-deployment` deploy report | project | `AGENT_REPORTS/DEPLOY_REPORT_{YYYYMMDD}_{HHMM}.md` (not committed) |

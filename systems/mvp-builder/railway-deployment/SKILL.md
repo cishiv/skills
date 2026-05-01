@@ -181,7 +181,7 @@ Body sections:
 - **Failures** (if any) — full Railway log excerpts and suggested remediation.
 - **Suggested next actions** — set the pending user-action env vars, verify the app behavior at the public URL, monitor next deploy on `git push`.
 
-**Do not commit this file.** Same as `/build-mvp` — designed for future HITL hooks.
+**Do not commit this file.** Same as `/build-from-spec` — designed for future HITL hooks.
 
 ### Step 12 — Final summary to user
 

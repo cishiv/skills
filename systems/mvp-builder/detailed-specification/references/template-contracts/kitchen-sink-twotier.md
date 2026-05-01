@@ -14,7 +14,7 @@ Use this snapshot only as a fallback when the live template can't be reached. No
 
 Structurally identical to `kitchen-sink-ts`. The split is informational — the architecture hints section will differ in content (workspaces, separate server/client/shared) but the spec format itself does not.
 
-For a project-mode detailed spec, **omit the `ACCEPTANCE_CRITERIA` section entirely** — it's the MVP skill's responsibility.
+The detailed spec **carries `ACCEPTANCE_CRITERIA`** describing the full vision (sectioned-numbered, EARS-flavored prose, with pre-conditions). `/mvp-specification` is optional — when invoked it may revise the AC down to an MVP slice; when bypassed, `/build-from-spec` consumes the detailed spec's AC directly.
 
 ## Literal template content
 
