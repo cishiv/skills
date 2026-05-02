@@ -27,10 +27,6 @@ Skills shared across multiple systems live at the repo root under `../skills/{sh
 
 ### [`mvp-builder/`](mvp-builder/)
 
-Idea → deployed MVP, using the user's three template repos (`kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`). Pipeline: `detailed-specification` → `mvp-specification` → `build-mvp` → `railway-deployment-{template}`, with `extend-features` as a sibling entry point for existing repos.
+Idea → deployed MVP, using the user's three template repos (`kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`). Pipeline: `detailed-specification` → `mvp-specification` (optional) → `build-from-spec` → `railway-deployment`, with `extend-features` as a sibling entry point for adding features to existing repos.
 
-Currently implemented stages: `detailed-specification`. Others scoped on demand.
-
-### Blog Synthesis Skill System
-
-Planned. Translate raw notes into consumable blog posts with tone maintained.
+`mvp-specification` is optional — flow detailed → build directly when scope-cutting isn't needed. `railway-deployment` is a single parameterized skill that detects the template from the repo.
