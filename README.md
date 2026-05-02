@@ -4,23 +4,23 @@ Personal Claude skills.
 
 ## Skills
 
+Standalone skills that work in both Claude Code and Claude Desktop. Invoke via slash command (e.g. `/interview-me`) or let Claude trigger them automatically when their description matches the request.
+
 - **[interview-me](skills/interview-me/)** — Interviews you with batched, themed questions written to Obsidian before producing complex deliverables (specs, system prompts, architecture docs). Surfaces your own thinking rather than letting the AI fill in the blanks.
+- **[update-next](skills/update-next/)** — Logs forward-looking work for the current project to `AI/NEXT.md` in Obsidian. Each project gets its own H3 with a checklist; the skill adds, completes, or edits items based on what the session surfaced.
+- **[personal-brand-coach](skills/personal-brand-coach/)** — Multi-session coach for developing pillars, audience, positioning, anti-positioning, and a light voice guide. Writes canonical artifacts to `AI/PersonalBrand/` in Obsidian.
+- **[generate-tone-reference](skills/generate-tone-reference/)** — Extracts a structured tone reference from writing samples (Obsidian notes, web pages, local repos). Produces `Writing/ToneReferences/{name}.md` with a machine-parseable frontmatter that downstream skills consume.
+- **[linkedin-post-ideas](skills/linkedin-post-ideas/)** — Generates a week of LinkedIn post ideas anchored to your brand pillars and recent activity (GitHub commits, Obsidian changes, prior posts). Each idea is a checkbox plus a copy-paste invocation for `/linkedin-post-synthesis`.
+- **[linkedin-post-synthesis](skills/linkedin-post-synthesis/)** — Drafts LinkedIn posts in your voice. Combines `personal-brand-coach` artifacts with a `generate-tone-reference` voice guide; produces 3 variants per topic with rationale.
 
-## Usage
+The personal-brand / writing skills compose: `personal-brand-coach` + `generate-tone-reference` feed `linkedin-post-ideas` and `linkedin-post-synthesis`.
 
-Skills work in both Claude Code and Claude Desktop. They can be invoked via slash command (e.g. `/interview-me`) or triggered automatically when their description matches the request.
+## Systems
 
-Skills are stored in markdown format, not `.skill` format.
+A **system** is a bundled skill with sub-skills nested as folders. The top-level `SKILL.md` routes to the right sub-skill rather than doing the work itself. See [`systems/README.md`](systems/README.md) for the pattern.
 
-## skill-sync
+- **[mvp-builder](systems/mvp-builder/)** — Idea → deployed MVP using the user's three template repos (`kitchen-sink-ts`, `kitchen-sink-twotier`, `statix`). Pipeline: `detailed-specification` → `mvp-specification` (optional) → `build-from-spec` → `railway-deployment`, with `extend-features` as a sibling entry point for adding features to existing repos.
 
-A small Bun CLI in [`skill-sync/`](skill-sync/) for managing Claude Code skills:
+## Format
 
-```
-skill-sync add [--source <path|git-url>]   # discover SKILL.md dirs and install to ~/.claude/skills
-skill-sync list                            # show installed skills
-skill-sync remove                          # uninstall (symlinks are left alone)
-skill-sync editor [--port 4173]            # local Monaco-based browser editor
-```
-
-Run with `bun run skill-sync/src/index.ts <cmd>` or link the `skill-sync/bin/skill-sync` shim onto your `PATH`.
+Skills are stored in markdown (`SKILL.md`), not `.skill` format.
